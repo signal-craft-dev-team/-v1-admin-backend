@@ -1,11 +1,15 @@
-from typing import Annotated
-from fastapi import FastAPI, Header, HTTPException, Depends
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from uuid import UUID
- 
+
 from .src.config import settings
-from signalcraft_models.customer import AppUser
+from .src.database.db import init_pool
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.pool = await init_pool(settings.DATABASE_URL)
+    yield
+    await app.state.pool.close()
 
 # --------------------------------------------------------------------------
 # App
@@ -15,6 +19,7 @@ app = FastAPI(
     version="0.0.1",
     description='''운영자용 서버.<br>
                   DB 관리, 유저 관리, 운영자 대시보드 API 등을 제공합니다.''',
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -27,4 +32,9 @@ app.add_middleware(
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": app.version, "check": AppUser.schema_json()}
+    return {"status": "ok", "version": app.version}
+@app.get("/db-test")
+async def db_test():
+    async with app.state.pool.acquire() as conn:
+        result = await conn.fetchval("SELECT * FROM app_user LIMIT 10;")
+    return {"db_test": result}
