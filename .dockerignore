@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# signalcraft-models (별도 설치되므로 제외)
+sc_models/
+
 # C extensions
 *.so
 

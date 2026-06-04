@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from uuid import UUID
  
 from .src.config import settings
+from signalcraft_models.customer import AppUser
 
 # --------------------------------------------------------------------------
 # App
@@ -23,3 +24,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "version": app.version, "check": AppUser.schema_json()}

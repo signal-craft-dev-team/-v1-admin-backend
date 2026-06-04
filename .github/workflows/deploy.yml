@@ -40,6 +40,8 @@ jobs:
         uses: docker/build-push-action@v6.15.0
         with:
           context: .
+          secrets: |
+            github_token=${{ secrets.MODEL_REPO_TOKEN }}
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:latest
