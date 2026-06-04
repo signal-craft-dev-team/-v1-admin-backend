@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .src.config import settings
 from .src.database.db import init_pool
+from .src.routers import customer, app_user, place, machine_model, machine, technician
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,11 +31,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
+@app.get("/health",tags=["헬스체크"])
 async def health():
     return {"status": "ok", "version": app.version}
-@app.get("/db-test")
-async def db_test():
-    async with app.state.pool.acquire() as conn:
-        result = await conn.fetchval("SELECT * FROM app_user LIMIT 10;")
-    return {"db_test": result}
+
+app.include_router(customer.router)
+app.include_router(app_user.router)
+app.include_router(place.router)
+app.include_router(machine_model.router)
+app.include_router(machine.router)
+app.include_router(technician.router)
