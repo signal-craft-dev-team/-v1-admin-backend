@@ -12,6 +12,7 @@ class TechnicianCreate(BaseModel):
     phone: str
     address: str
     customer_id: UUID | None = None
+    place_id: UUID | None = None
     is_primary: bool = False
 
 
@@ -43,9 +44,11 @@ async def search_technicians_by_name(name: str, conn=Depends(get_db)):
 @router.post("", response_model=Technician, status_code=201, summary="정비사 생성", tags=["정비사 / 생성"])
 async def create_technician(body: TechnicianCreate, conn=Depends(get_db)):
     if body.customer_id:
-        customer = await conn.fetchval("SELECT id FROM customer WHERE id = $1", body.customer_id)
-        if not customer:
+        if not await conn.fetchval("SELECT id FROM customer WHERE id = $1", body.customer_id):
             raise HTTPException(status_code=404, detail=f"customer_id {body.customer_id} 를 찾을 수 없습니다.")
+    if body.place_id:
+        if not await conn.fetchval("SELECT id FROM place WHERE id = $1", body.place_id):
+            raise HTTPException(status_code=404, detail=f"place_id {body.place_id} 를 찾을 수 없습니다.")
 
     async with conn.transaction():
         technician_id = uuid4()
@@ -64,11 +67,12 @@ async def create_technician(body: TechnicianCreate, conn=Depends(get_db)):
         if body.customer_id:
             await conn.execute(
                 """
-                INSERT INTO customer_technician (customer_id, technician_id, is_primary)
-                VALUES ($1, $2, $3)
+                INSERT INTO customer_technician (customer_id, technician_id, place_id, is_primary)
+                VALUES ($1, $2, $3, $4)
                 """,
                 body.customer_id,
                 technician_id,
+                body.place_id,
                 body.is_primary,
             )
 
