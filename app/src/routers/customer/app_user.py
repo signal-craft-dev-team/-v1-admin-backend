@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from signalcraft_models.customer import AppUser
-from ..database.db import get_db
+from ...database.db import get_db
 
 router = APIRouter(prefix="/app-users")
 

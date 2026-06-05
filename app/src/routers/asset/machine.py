@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from signalcraft_models.machine import Machine
-from ..database.db import get_db
+from ...database.db import get_db
 
 router = APIRouter(prefix="/machines")
 

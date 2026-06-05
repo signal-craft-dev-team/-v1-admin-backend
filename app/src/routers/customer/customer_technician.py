@@ -1,7 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from ..database.db import get_db
+from ...database.db import get_db
 
 router = APIRouter(prefix="/customer-technicians")
 

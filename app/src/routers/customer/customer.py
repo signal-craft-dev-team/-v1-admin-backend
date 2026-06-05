@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from signalcraft_models.customer import Customer
-from ..database.db import get_db
+from ...database.db import get_db
 import asyncpg
 
 router = APIRouter(prefix="/customers")
@@ -124,10 +124,11 @@ async def hard_delete_customer(
                 SELECT id FROM edge_server WHERE customer_id = $1)""", customer_id)
         await try_delete("DELETE FROM edge_server WHERE customer_id = $1", customer_id)
 
-        # 7. 설비 / 유저 / 현장 / 고객사 (핵심 — 반드시 성공해야 함)
+        # 7. 설비 / 유저 / 현장 / 정비사 연결 / 고객사 (핵심 — 반드시 성공해야 함)
         await conn.execute("DELETE FROM machine WHERE customer_id = $1", customer_id)
         await conn.execute("DELETE FROM app_user WHERE customer_id = $1", customer_id)
         await conn.execute("DELETE FROM place WHERE customer_id = $1", customer_id)
+        await conn.execute("DELETE FROM customer_technician WHERE customer_id = $1", customer_id)
         result = await conn.execute("DELETE FROM customer WHERE id = $1", customer_id)
 
     if int(result.split()[-1]) == 0:
