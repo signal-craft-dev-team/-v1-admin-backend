@@ -8,6 +8,14 @@ from ...database.db import get_db
 router = APIRouter(prefix="/edge-servers")
 
 
+def _row(row) -> dict:
+    d = dict(row)
+    for key in ("tailscale_ip_address", "mac_address"):
+        if d.get(key) is not None:
+            d[key] = str(d[key])
+    return d
+
+
 class EdgeServerCreate(BaseModel):
     customer_id: UUID
     place_id: UUID
@@ -74,7 +82,7 @@ async def get_servers_by_customer(customer_id: UUID, conn=Depends(get_db)):
         """,
         customer_id,
     )
-    return [dict(row) for row in rows]
+    return [_row(row) for row in rows]
 
 
 @router.get("/by-place/{place_id}", response_model=list[EdgeServer], summary="현장별 엣지 서버 조회", tags=["엣지 서버 / 조회"])
@@ -83,7 +91,7 @@ async def get_servers_by_place(place_id: UUID, conn=Depends(get_db)):
         "SELECT * FROM edge_server WHERE place_id = $1 ORDER BY created_at DESC",
         place_id,
     )
-    return [dict(row) for row in rows]
+    return [_row(row) for row in rows]
 
 
 # 생성
@@ -119,7 +127,7 @@ async def create_edge_server(body: EdgeServerCreate, conn=Depends(get_db)):
         body.active_hours_start, body.active_hours_end,
         body.sensor_captured_gap_ms, body.installed_at,
     )
-    return dict(row)
+    return _row(row)
 
 
 # 수정
@@ -142,7 +150,7 @@ async def update_edge_server(server_id: UUID, body: EdgeServerUpdate, conn=Depen
         f"UPDATE edge_server SET {fields}, updated_at = now() WHERE id = $1 RETURNING *",
         server_id, *list(updates.values()),
     )
-    return dict(row)
+    return _row(row)
 
 
 # 삭제
@@ -166,4 +174,4 @@ async def soft_delete_edge_server(server_id: UUID, conn=Depends(get_db)):
     )
     if not row:
         raise HTTPException(status_code=404, detail="해당 엣지 서버를 찾을 수 없습니다.")
-    return dict(row)
+    return _row(row)
